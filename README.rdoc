@@ -1,0 +1,27 @@
+== SUMMARY
+
+Just a tool to manage common javascript libraries.
+
+== Example
+
+  // load jquery
+  head.jquery(function(){
+    // something use jquery to do
+  });
+  
+  // load jqueryui and not duplicate load jquery
+  head.jqueryui(function(){
+    // something use jqueryui to do
+  });
+
+== Getting Started
+
+1. Download from github
+
+  git clone https://benz303@github.com/benz303/lib.js.git
+
+2. Install ruby gems
+
+  bundle install
+
+3. Edit config.yml

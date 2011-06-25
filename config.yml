@@ -1,0 +1,19 @@
+# Basic Settings
+config:
+  url: src/lib/
+  src: src/lib/
+  download: false
+  minify: true
+
+# Files to be download and writen in lib.js
+libs:
+  sizzle: https://raw.github.com/jquery/sizzle/master/sizzle.js
+  jquery: https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js
+  jqueryui:
+    - jquery
+    - https://ajax.googleapis.com/ajax/libs/jqueryui/1/jquery-ui.js
+    - https://raw.github.com/jquery/jquery-ui/master/themes/base/jquery.ui.all.css
+  qunit:
+    - jquery
+    - https://raw.github.com/jquery/qunit/master/qunit/qunit.js
+    - https://raw.github.com/jquery/qunit/master/qunit/qunit.css
