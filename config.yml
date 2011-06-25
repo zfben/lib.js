@@ -1,7 +1,7 @@
 # Basic Settings
 config:
-  url: src/lib/
-  src: src/lib/
+  src: src/
+  src/lib: src/lib/
   download: false
   minify: true
 

@@ -21,7 +21,6 @@ DATA = YAML.load(File.read('config.yml'))
 # Merge default config
 
 @config = {
-  'url' => 'src/lib/'
   'src' => 'src/',
   'download' => false,
   'minify' => true
@@ -64,7 +63,8 @@ def download lib, url
     dir = File.dirname(path)
     system('mkdir ' + dir) unless File.exists?(dir)
     if File.extname(path) == '.css'
-      File.open(path, 'w'){ |f| f.write(download_css(lib, url, @config['url'] + File.basename(url))) }
+      css = download_css(lib, url, File.join(dir, File.basename(url)))
+      File.open(path, 'w'){ |f| f.write(css) }
     else
       if @config['download'] == true || !File.exists?(path)
         system 'wget ' + url + ' -O ' + path + ' -N'
@@ -86,7 +86,7 @@ def download_css lib, url, path
   reg = /@import[^"]+"([^"]+)"[^;]*;/
   return File.read(path).partition_all(reg).map{ |f|
     if reg =~ f
-      p sub = File.join(File.dirname(path), reg.match(f)[1])
+      sub = File.join(File.dirname(path), reg.match(f)[1])
       f = download_css(lib, File.dirname(url) + '/' + reg.match(f)[1], sub)
     end
     f
@@ -102,13 +102,12 @@ task :build do
       @libs[lib] = url.map{ |u| download(lib, u) }
     end
   end
-  libjs = File.read('src/lib/headjs.js')
+  libjs = File.read(@libs['headjs']) << ';'
   @libs.each do |lib, url|
     url = url.join("','") if url.class == Array
-    libjs << "head.#{lib}=function(callback){head.js('#{url}',function(){if(typeof callback!=='undefined'){callback();}});};\n"
+    libjs << "head.#{lib}=function(callback){head.js('#{url}',function(){if(typeof callback!=='undefined'){callback();}});};"
+    libjs << "\n" if @config['minify'] == false
   end
-  File.open('src/lib.js', 'w'){ |f| f.write(libjs) }
-  if @config['minify'] == true
-    minify 'src/lib.js'
-  end
+  path = File.join(@config['src'], 'lib.js')
+  File.open(path, 'w'){ |f| f.write(libjs) }
 end
