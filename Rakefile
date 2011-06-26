@@ -35,7 +35,17 @@ def minify path
   return path
 end
 
-def download lib, url
+def download url, path
+  if @config['download'] == true || !File.exists?(path)
+    unless system 'wget ' + url + ' -O ' + path + ' -N'
+      p url + ' download fail!'
+      system('rm ' + path)
+      exit!
+    end
+  end
+end
+
+def download_source lib, url
   if url =~ /:\/\//
     path = "#{@config['src/lib']}#{lib}/#{lib}#{url.match(/\.([^.]+)$/)[0]}"
     dir = File.dirname(path)
@@ -43,11 +53,9 @@ def download lib, url
     if File.extname(path) == '.css'
       css = download_css(lib, url, File.join(dir, File.basename(url)))
       File.open(path, 'w'){ |f| f.write(css) }
-      p download_images(lib, url, path)
+      download_images(lib, url, path)
     else
-      if @config['download'] == true || !File.exists?(path)
-        system 'wget ' + url + ' -O ' + path + ' -N'
-      end
+      download url, path
     end
     if @config['minify'] == true
       path = minify(path)
@@ -59,9 +67,7 @@ def download lib, url
 end
 
 def download_css lib, url, path
-  if @config['download'] == true || !File.exists?(path)
-    system 'wget ' + url + ' -O ' + path + ' -N'
-  end
+  download url, path
   reg = /@import[^"]+"([^"]+)"[^;]*;/
   return File.read(path).partition_all(reg).map{ |f|
     if reg =~ f
@@ -81,9 +87,7 @@ def download_images lib, url, path
       unless File.exists?(File.dirname(sub))
         system('mkdir ' + File.dirname(sub))
       end
-      if @config['download'] == true || !File.exists?(sub)
-        system 'wget ' + suburl + ' -O ' + sub + ' -N'
-      end
+      download suburl, sub
     else
       f = nil
     end
@@ -109,7 +113,8 @@ task :build, :config do |task, args|
   # Merge default config
 
   @config = {
-    'src' => 'src/',
+    'url' => 'src/default',
+    'src' => 'public/src/',
     'download' => false,
     'minify' => true
   }.merge(DATA['config'])
@@ -127,15 +132,16 @@ task :build, :config do |task, args|
   
   @libs.each do |lib, url|
     if url.class == String
-      @libs[lib] = download(lib, url)
+      @libs[lib] = download_source(lib, url)
     else
-      @libs[lib] = url.map{ |u| download(lib, u) }
+      @libs[lib] = url.map{ |u| download_source(lib, u) }
     end
   end
   libjs = File.read(@libs['headjs']) << ';'
   @libs.each do |lib, url|
     url = url.join("','") if url.class == Array
-    libjs << "head.#{lib}=function(callback){head.js('#{url}',function(){if(typeof callback!=='undefined'){callback();}});};"
+    url = url.gsub(@config['src'], @config['url'])
+    libjs << "head['#{lib}']=function(callback){head.js('#{url}',function(){if(typeof callback!=='undefined'){callback();}});};"
     libjs << "\n" if @config['minify'] == false
   end
   path = File.join(@config['src'], 'lib.js')

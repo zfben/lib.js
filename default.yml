@@ -1,7 +1,8 @@
 # Basic Settings
 config:
-  src: src/default
-  src/lib: src/default/lib/
+  url: src/default
+  src: public/src/default
+  src/lib: public/src/default/lib/
   download: false
   minify: true
 
