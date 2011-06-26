@@ -114,7 +114,7 @@ task :build, :config do |task, args|
 
   @config = {
     'url' => 'src/default',
-    'src' => 'public/src/',
+    'src' => 'src/',
     'download' => false,
     'minify' => true
   }.merge(DATA['config'])
