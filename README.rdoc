@@ -1,6 +1,6 @@
 == SUMMARY
 
-Just a tool to manage common javascript libraries.
+Just a tool to manage common javascript libraries, base headjs.
 
 == Example
 
@@ -24,4 +24,10 @@ Just a tool to manage common javascript libraries.
 
   bundle install
 
-3. Edit config.yml
+3. Copy default.yml and change it
+
+4. run build task
+
+  rake build
+
+5. Files are in src folder

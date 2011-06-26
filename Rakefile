@@ -14,28 +14,6 @@ class String
   end
 end
 
-# Get config.yml
-
-DATA = YAML.load(File.read('config.yml'))
-
-# Merge default config
-
-@config = {
-  'src' => 'src/',
-  'download' => false,
-  'minify' => true
-}.merge(DATA['config'])
-
-@config['src/lib'] = 'src/lib/' unless @config.has_key?('src/lib')
-
-[@config['src'], @config['src/lib']].each{ |f| system('mkdir ' + f) unless File.exists?(f) }
-
-# Merge default libs
-
-@libs = {
-  'headjs' => 'https://raw.github.com/benz303/headjs/master/dist/head.js'
-}.merge(DATA['libs'])
-
 def minify path
   if File.exists?(path) && File.read(path).length > 10
     p '== minify: ' + path
@@ -65,6 +43,7 @@ def download lib, url
     if File.extname(path) == '.css'
       css = download_css(lib, url, File.join(dir, File.basename(url)))
       File.open(path, 'w'){ |f| f.write(css) }
+      p download_images(lib, url, path)
     else
       if @config['download'] == true || !File.exists?(path)
         system 'wget ' + url + ' -O ' + path + ' -N'
@@ -93,8 +72,59 @@ def download_css lib, url, path
   }.join "\n"
 end
 
+def download_images lib, url, path
+  reg = /url\("?'?([^'")]+)'?"?\)/
+  return File.read(path).partition_all(reg).map{ |f|
+    if reg =~ f
+      sub = File.join(File.dirname(path), reg.match(f)[1])
+      suburl = File.dirname(url) + '/' + reg.match(f)[1]
+      unless File.exists?(File.dirname(sub))
+        system('mkdir ' + File.dirname(sub))
+      end
+      if @config['download'] == true || !File.exists?(sub)
+        system 'wget ' + suburl + ' -O ' + sub + ' -N'
+      end
+    else
+      f = nil
+    end
+    f
+  }.compact
+end
+
 desc 'build files from lib.yml'
-task :build do
+task :build, :config do |task, args|
+  args = {
+    :config => 'default.yml'
+  }.merge(args.to_hash)
+  
+  unless File.exists?(args[:config])
+    p 'File is not exists!'
+    exit!
+  end
+  
+  # Get config.yml
+
+  DATA = YAML.load(File.read(args[:config]))
+
+  # Merge default config
+
+  @config = {
+    'src' => 'src/',
+    'download' => false,
+    'minify' => true
+  }.merge(DATA['config'])
+
+  @config['src/lib'] = 'src/lib/' unless @config.has_key?('src/lib')
+
+  [@config['src'], @config['src/lib']].each{ |f| system('mkdir ' + f) unless File.exists?(f) }
+
+  # Merge default libs
+
+  @libs = {
+    'headjs' => 'https://raw.github.com/benz303/headjs/master/dist/head.js'
+  }.merge(DATA['libs'])
+  
+  
   @libs.each do |lib, url|
     if url.class == String
       @libs[lib] = download(lib, url)

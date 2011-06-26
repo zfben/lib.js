@@ -1,0 +1,30 @@
+# Basic Settings
+config:
+  src: src/default
+  src/lib: src/default/lib/
+  download: false
+  minify: true
+
+# Files to be download and writen in lib.js
+libs:
+  # base libraries
+  sizzle: https://raw.github.com/jquery/sizzle/master/sizzle.js
+  jquery: https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js
+  underscore: http://documentcloud.github.com/underscore/underscore.js
+  
+  # jquery plugins
+  jquery-cookie: https://raw.github.com/jquery/jquery-ui/master/external/jquery.cookie.js
+  jqueryui:
+    - jquery
+    - https://ajax.googleapis.com/ajax/libs/jqueryui/1/jquery-ui.js
+    - https://raw.github.com/jquery/jquery-ui/master/themes/base/jquery.ui.all.css
+  qunit:
+    - jquery
+    - https://raw.github.com/jquery/qunit/master/qunit/qunit.js
+    - https://raw.github.com/jquery/qunit/master/qunit/qunit.css
+  colorbox:
+    - https://raw.github.com/jackmoore/colorbox/master/colorbox/jquery.colorbox.js
+    - https://raw.github.com/jackmoore/colorbox/master/example1/colorbox.css
+  cleditor:
+    - https://raw.github.com/benz303/cleditor/master/jquery.cleditor.js
+    - https://raw.github.com/benz303/cleditor/master/jquery.cleditor.css
