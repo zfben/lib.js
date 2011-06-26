@@ -16,34 +16,34 @@ Just a tool to manage common javascript libraries, base headjs.
   
 == Run Example by youself
 
-1. Download from github
+ 1. Download from github
 
   git clone https://benz303@github.com/benz303/lib.js.git
 
-2. Install ruby gems
+ 2. Install ruby gems
 
   bundle install
 
-3. Run web server
+ 3. Run web server
 
   ruby web.rb
 
-4. Open http://localhost:4567
+ 4. Open http://localhost:4567
 
 == Getting Started
 
-1. Download from github
+ 1. Download from github
 
   git clone https://benz303@github.com/benz303/lib.js.git
 
-2. Install ruby gems
+ 2. Install ruby gems
 
   bundle install
 
-3. Copy default.yml and change it
+ 3. Copy default.yml and change it
 
-4. run build task
+ 4. run build task
 
   rake build
 
-5. Files are in src folder
+ 5. Files are in src folder
