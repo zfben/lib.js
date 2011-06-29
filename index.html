@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <title>Lib.js</title>
-    <script src="src/default/lib.js"></script>
-    <script>head.qunit();</script>
+    <script src="src/default/javascripts/lib.js"></script>
+    <script>LazyLoad.qunit();</script>
   </head>
   <body>
     <h1 id="qunit-header">Lib.js</h1>
@@ -16,23 +16,22 @@
     <button onclick="runtest();">Run Test</button>
     <script>
       function runtest(){
-        head.qunit(function(){
-          asyncTest('load jquery', function(){
-            head.jquery(function(){
-              ok(jQuery === $, 'jQuery === $');
-              start();
-            });
-          });
-          asyncTest('load jqueryui', function(){
-            head.jqueryui(function(){
-              ok(jQuery.ui, 'jQuery.ui');
-              var el = $('<div></div>').dialog();
-	            ok(el.is(':data(dialog)'), 'jqueryui dialog');
-	            el.remove();
-              start();
-            });
+        test('load jquery', function(){
+          ok(jQuery === $, 'jQuery === $');
+        });
+        asyncTest('load colorbox', function(){
+          LazyLoad.colorbox(function(){
+            ok(jQuery.colorbox, 'jQuery.colorbox');
+            start();
           });
         });
+        asyncTest('load jqGrid', function(){
+          LazyLoad.jqGrid(function(){
+            ok(jQuery.jgrid, 'jQuery.jgrid');
+            start();
+          });
+        });
+        return true;
       }
     </script>
   </body>

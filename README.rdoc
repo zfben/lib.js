@@ -5,12 +5,12 @@ Just a tool to manage common javascript libraries, base headjs.
 == Example
 
   // load jquery
-  head.jquery(function(){
+  LazyLoad.jquery(function(){
     // something use jquery to do
   });
   
   // load jqueryui and not duplicate load jquery
-  head.jqueryui(function(){
+  LazyLoad.jqueryui(function(){
     // something use jqueryui to do
   });
   

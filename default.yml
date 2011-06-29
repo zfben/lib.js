@@ -2,7 +2,6 @@
 config:
   url: src/default
   src: src/default
-  src/lib: src/default/lib/
   download: false
   minify: true
 
@@ -33,3 +32,28 @@ libs:
     - jquery
     - https://raw.github.com/benz303/cleditor/master/jquery.cleditor.js
     - https://raw.github.com/benz303/cleditor/master/jquery.cleditor.css
+  jqGrid:
+    - jqueryui
+    - https://raw.github.com/tonytomov/jqGrid/master/js/i18n/grid.locale-en.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.base.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.common.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.formedit.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.inlinedit.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.celledit.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.subgrid.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.treegrid.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.grouping.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.custom.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.tbltogrid.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.import.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/jquery.fmatter.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/JsonXml.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.jqueryui.js
+    - https://raw.github.com/tonytomov/jqGrid/master/js/grid.filter.js
+    - https://raw.github.com/tonytomov/jqGrid/master/css/ui.jqgrid.css
+  
+  backbone:
+    - underscore
+    - http://documentcloud.github.com/backbone/backbone.js
+bunder:
+  
