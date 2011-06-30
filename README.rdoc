@@ -1,6 +1,8 @@
 == SUMMARY
 
-Just a tool to manage common javascript libraries, base headjs.
+Just a tool to manage common javascript libraries, base LazyLoad.
+
+See qunit at http://benz303.github.com/lib.js
 
 == Example
 
@@ -13,6 +15,8 @@ Just a tool to manage common javascript libraries, base headjs.
   LazyLoad.jqueryui(function(){
     // something use jqueryui to do
   });
+  
+More Options see https://github.com/benz303/lib.js/blob/gh-pages/default.yml
   
 == Run Example by youself
 
@@ -40,7 +44,7 @@ Just a tool to manage common javascript libraries, base headjs.
 
   bundle install
 
- 3. Copy default.yml and change it
+ 3. Copy example.yml and change it.
 
  4. run build task
 

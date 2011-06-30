@@ -14,30 +14,20 @@ class String
   end
 end
 
-def sys cmd
-  p cmd
-  system cmd
-end
-
-def minify path
-  if File.exists?(path) && File.read(path).length > 10
-    p '== minify: ' + path
+def minify source, type
+  if source.length > 10
     min = ''
-    case File.extname(path)
-      when '.js'
-        min = Uglifier.new(:copyright => false).compile(File.read(path))
-      when '.css'
-        min = Sass::Engine.new(Sass::CSS.new(File.read(path)).render(:sass), :syntax => :sass, :style => :compressed, :cache => false).render
+    case type
+      when :js
+        min = Uglifier.compile(source, :copyright => false)
+      when :css
+        min = Sass::Engine.new(Sass::CSS.new(source).render(:sass), :syntax => :sass, :style => :compressed, :cache => false).render
     end
     if min.length > 10
-      new_path = path.split('.')
-      new_path[-1] = 'min.' + new_path[-1]
-      new_path = new_path.join('.')
-      File.open(new_path, 'w'){ |f| f.write(min) }
-      return new_path
+      return min
     end
   end
-  return path
+  return source
 end
 
 def download url, path
@@ -52,7 +42,7 @@ end
 
 def download_source lib, url
   if url =~ /:\/\//
-    path = File.join(@config['src/lib'], lib, File.basename(url))
+    path = File.join(@config['src/source'], lib, File.basename(url))
     dir = File.dirname(path)
     system('mkdir ' + dir) unless File.exists?(dir)
     if File.extname(path) == '.css'
@@ -61,9 +51,6 @@ def download_source lib, url
       download_images(lib, url, path)
     else
       download url, path
-    end
-    if @config['minify'] == true
-      path = minify(path)
     end
   else
     path = url
@@ -104,7 +91,7 @@ end
 desc 'build files from lib.yml'
 task :build, :config do |task, args|
   args = {
-    :config => 'default.yml'
+    :config => 'example.yml'
   }.merge(args.to_hash)
   
   unless File.exists?(args[:config])
@@ -119,23 +106,26 @@ task :build, :config do |task, args|
   # Merge default config
 
   @config = {
-    'src' => 'src/default',
+    'src' => 'src/example',
     'download' => false,
     'minify' => true
   }.merge(DATA['config'])
 
   @config['url'] = @config['src'] unless @config.has_key?('url')
+  @config['src/source'] = File.join(@config['src'], '.source') unless @config.has_key?('src/source')
   
-  ['lib', 'javascripts', 'stylesheets', 'images'].each do |path|
+  ['source', 'javascripts', 'stylesheets', 'images'].each do |path|
     @config['src/' + path] = File.join(@config['src'], path) unless @config.has_key?('src/' + path)
   end
-  [@config['src'], @config['src/lib'], @config['src/javascripts'], @config['src/stylesheets'], @config['src/images']].each{ |f| system('mkdir ' + f) unless File.exists?(f) }
+  [@config['src'], @config['src/source'], @config['src/javascripts'], @config['src/stylesheets'], @config['src/images']].each{ |f| system('mkdir ' + f) unless File.exists?(f) }
 
   # Merge default libs
 
   @libs = {
     'lazyload' => 'https://raw.github.com/rgrove/lazyload/master/lazyload.js'
   }.merge(DATA['libs'])
+  
+  @preload = DATA['preload']
   
   # Download source
   @libs.each do |lib, url|
@@ -165,12 +155,13 @@ task :build, :config do |task, args|
       file
     }.compact
     if css != ''
-      file = File.join(@config['src/lib'], lib, lib + '.css')
+      file = File.join(@config['src/source'], lib + '.css')
       File.open(file, 'w'){ |f| f.write(css) }
       path.push(file)
     end
     if js != ''
-      file = File.join(@config['src/lib'], lib, lib + '.js')
+      file = File.join(@config['src/source'], lib + '.js')
+      js = minify(js, :js) if @config['minify'] == true
       File.open(file, 'w'){ |f| f.write(js) }
       path.push(file)
     end
@@ -198,22 +189,24 @@ task :build, :config do |task, args|
         if type == 'stylesheets' && reg =~ File.read(file)
           css = File.read(file).partition_all(reg).map{ |f|
             if reg =~ f
-              f = 'url(../images/"' << File.basename(f.match(reg)[1]) << '")'
+              f = 'url("../images/' << File.basename(f.match(reg)[1]) << '")'
             end
             f
           }.join('')
+          css = minify(css, :css) if @config['minify'] == true
           File.open(file, 'w'){ |f| f.write(css) }
         end
         if type == 'images'
           subpath = nil
         end
+        File.open(file, 'w'){ |f| f.write(minify(File.read(file), :js)) } if @config['minify'] == true && type == 'javascript'
       else
         subpath = @libs[subpath]
       end
       subpath
     }.compact.flatten
   end
-  p @libs
+  
   @libs.each do |lib, path|
     css = []
     js = []
@@ -233,6 +226,12 @@ task :build, :config do |task, args|
     libjs << "LazyLoad.css(['#{css}']);" if css.length > 0
     libjs << "LazyLoad.js(['#{js}'],function(){if(typeof callback!=='undefined'){callback();}});};"
     libjs << "\n" if @config['minify'] == false
+  end
+  
+  if @preload.class == Array && @preload.length > 0
+    @preload.each do |lib|
+      libjs << "LazyLoad['#{lib}']();"
+    end
   end
   File.open(File.join(@config['src/javascripts'], 'lib.js'), 'w'){ |f| f.write(libjs) }
 end
