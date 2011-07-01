@@ -15,24 +15,30 @@
     <button onclick="runtest();">Run Test</button>
     <script>
       function runtest(){
-        test('load jquery', function(){
-          ok(jQuery === $, 'jQuery === $');
+        test('load QUnit', function(){
+          ok(QUnit, 'QUnit');
         });
-        asyncTest('load localfile', function(){
-          LazyLoad.localfile(function(){
+        asyncTest('load localfile', 1, function(){
+          lib.localfile(function(){
             ok(window.localfile, 'window.localfile');
             start();
           });
         });
-        asyncTest('load colorbox', function(){
-          LazyLoad.colorbox(function(){
+        asyncTest('load colorbox', 1, function(){
+          lib.colorbox(function(){
             ok(jQuery.colorbox, 'jQuery.colorbox');
             start();
           });
         });
-        asyncTest('load jqGrid', function(){
-          LazyLoad.jqGrid(function(){
+        asyncTest('load jqGrid', 1, function(){
+          lib.jqGrid(function(){
             ok(jQuery.jgrid, 'jQuery.jgrid');
+            start();
+          });
+        });
+        asyncTest('load home.js', 1, function(){
+          lib.home(function(){
+            ok(jQuery.cookie('test') === 'ok', "jQuery.cookie('test') === 'ok'");
             start();
           });
         });

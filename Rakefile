@@ -104,7 +104,6 @@ task :build, :config do |task, args|
   DATA = YAML.load(File.read(args[:config]))
 
   # Merge default config
-
   @config = {
     'src' => 'src/example',
     'download' => false,
@@ -120,10 +119,11 @@ task :build, :config do |task, args|
   [@config['src'], @config['src/source'], @config['src/javascripts'], @config['src/stylesheets'], @config['src/images']].each{ |f| system('mkdir ' + f) unless File.exists?(f) }
 
   # Merge default libs
-
   @libs = {
     'lazyload' => 'https://raw.github.com/rgrove/lazyload/master/lazyload.js'
   }.merge(DATA['libs'])
+  
+  @bundle = DATA['bundle']
   
   @preload = DATA['preload']
   
@@ -169,7 +169,6 @@ task :build, :config do |task, args|
     @libs[lib] = path
   end
   
-  libjs = File.read(@libs['lazyload']) << ';'
   @libs.each do |lib, path|
     path = [path] if path.class != Array
     @libs[lib] = path.map{ |subpath|
@@ -205,13 +204,17 @@ task :build, :config do |task, args|
       end
       subpath
     }.compact.flatten
+    @libs[lib] = @libs[lib][0] if @libs[lib].length == 1
   end
   
+  libjs = File.read(@libs['lazyload']) << ';' << (@config['minify'] ? minify(File.read('lib.js'), :js) : File.read('lib.js')) << ';'
+  
+  # Merge js and css files to one js and one css.
   @libs.each do |lib, path|
     css = []
     js = []
     path = [path] unless path.class == Array
-    path.each do |url|
+    path = path.each do |url|
       url = url.gsub(@config['src'], @config['url'])
       case File.extname(url)
         when '.css'
@@ -220,17 +223,48 @@ task :build, :config do |task, args|
           js.push url
       end
     end
-    css = css.join("','")
-    js = js.join("','")
-    libjs << "LazyLoad['#{lib}']=function(callback){"
-    libjs << "LazyLoad.css(['#{css}']);" if css.length > 0
-    libjs << "LazyLoad.js(['#{js}'],function(){if(typeof callback!=='undefined'){callback();}});};"
+    source = (css + js).join("','")
+    libjs << "lib['#{lib}']=function(callback){lib('#{source}',function(){if(typeof callback!=='undefined'){callback();}});};"
     libjs << "\n" if @config['minify'] == false
+  end
+  
+  if @bundle != nil && @bundle.length > 0
+    @bundle.each do |name, libs|
+      css = ''
+      js = ''
+      path = []
+      libs.each do |lib|
+        source = @libs[lib]
+        source = [source] if source.class != Array
+        source.each do |file|
+          case File.extname(file)
+            when '.css'
+              css << File.read(file)
+            when '.js'
+              js << File.read(file) << ';'
+          end
+        end
+      end
+      if css != ''
+        file = File.join(@config['src/stylesheets'], name + '.css')
+        File.open(file, 'w'){ |f| f.write(css) }
+        path.push(file)
+      end
+      if js != ''
+        file = File.join(@config['src/javascripts'], name + '.js')
+        File.open(file, 'w'){ |f| f.write(js) }
+        path.push(file)
+      end
+      if path.length > 0
+        code = path.join("','")
+        libjs << "lib['#{name}']=function(callback){lib('#{code}',function(){if(typeof callback!=='undefined'){callback();}});};"
+      end
+    end
   end
   
   if @preload.class == Array && @preload.length > 0
     @preload.each do |lib|
-      libjs << "LazyLoad['#{lib}']();"
+      libjs << "lib['#{lib}']();"
     end
   end
   File.open(File.join(@config['src/javascripts'], 'lib.js'), 'w'){ |f| f.write(libjs) }

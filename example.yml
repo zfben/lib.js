@@ -1,8 +1,8 @@
 # Basic Settings
 config:
-  src: src/example  # which folder to put files
-  download: false   # if file isn't exists, it will be downloaded always
-  minify: true      # use uglifier and sass engine to minify files
+  src: src/example      # which folder to put files
+  download: false       # if file isn't exists, it will be downloaded always
+  minify: true          # use uglifier and sass engine to minify files
 
 # Files to be download and writen in lib.js
 libs:
@@ -56,6 +56,14 @@ libs:
     - underscore
     - http://documentcloud.github.com/backbone/backbone.js
 
+  homejs:
+    - local/homejs.js
+
 # Will be load after lib.js loaded
 preload:
   - qunit
+
+bundle:
+  home:
+    - jquery-cookie
+    - homejs
