@@ -16,7 +16,7 @@ See qunit at http://benz303.github.com/lib.js
     // something use jqueryui to do
   });
   
-More Options see https://github.com/benz303/lib.js/blob/gh-pages/default.yml
+More Options see https://github.com/benz303/lib.js/blob/gh-pages/example.yml
   
 == Run Example by youself
 
