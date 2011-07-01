@@ -18,6 +18,12 @@
         test('load jquery', function(){
           ok(jQuery === $, 'jQuery === $');
         });
+        asyncTest('load localfile', function(){
+          LazyLoad.localfile(function(){
+            ok(window.localfile, 'window.localfile');
+            start();
+          });
+        });
         asyncTest('load colorbox', function(){
           LazyLoad.colorbox(function(){
             ok(jQuery.colorbox, 'jQuery.colorbox');

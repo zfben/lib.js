@@ -10,6 +10,7 @@ libs:
   sizzle: https://raw.github.com/jquery/sizzle/master/sizzle.js  # you use `LazyLoad.sizzle(function(){ // something should sizzle to do }`
   jquery: https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js
   underscore: http://documentcloud.github.com/underscore/underscore.js
+  localfile: local/localfile.js
   
   # jquery plugins
   jquery-cookie:

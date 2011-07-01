@@ -1,0 +1,1 @@
+window.localfile=!0
