@@ -232,11 +232,12 @@ task :build, :config do |task, args|
     @bundle.each do |name, libs|
       css = ''
       js = ''
-      path = []
+      files = []
       libs.each do |lib|
         source = @libs[lib]
         source = [source] if source.class != Array
         source.each do |file|
+          files.push(file)
           case File.extname(file)
             when '.css'
               css << File.read(file)
@@ -245,12 +246,16 @@ task :build, :config do |task, args|
           end
         end
       end
+      
+      path = []
       if css != ''
         file = File.join(@config['src/stylesheets'], name + '.css')
         File.open(file, 'w'){ |f| f.write(css) }
         path.push(file)
       end
       if js != ''
+        files = files.join("','")
+        js << "_lib('loaded','#{files}');"
         file = File.join(@config['src/javascripts'], name + '.js')
         File.open(file, 'w'){ |f| f.write(js) }
         path.push(file)

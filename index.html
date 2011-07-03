@@ -24,12 +24,6 @@
             start();
           });
         });
-        asyncTest('load colorbox', 1, function(){
-          lib.colorbox(function(){
-            ok(jQuery.colorbox, 'jQuery.colorbox');
-            start();
-          });
-        });
         asyncTest('load jqGrid', 1, function(){
           lib.jqGrid(function(){
             ok(jQuery.jgrid, 'jQuery.jgrid');
@@ -38,8 +32,13 @@
         });
         asyncTest('load home.js', 1, function(){
           lib.home(function(){
-            ok(jQuery.cookie('test') === 'ok', "jQuery.cookie('test') === 'ok'");
+            ok(Backbone, 'Backbone');
             start();
+            test('underscore is loaded', function(){
+              lib.underscore(function(){
+                ok(_, '_');
+              });
+            });
           });
         });
         return true;
