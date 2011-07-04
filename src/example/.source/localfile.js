@@ -1,1 +1,2 @@
-window.localfile=!0
+window.localfile = true;
+;

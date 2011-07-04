@@ -67,8 +67,8 @@
   
   // leave api to control loaded
   this._lib = function(){
-    var args = arguments, method = args.shift();
-    switch(method){
+    var args = Array.prototype.slice.call(arguments);
+    switch(args.shift()){
       case 'loaded':
         for(i in args){
           var source = args[i];

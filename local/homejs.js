@@ -1,1 +1,1 @@
-$.cookie('test', 'ok');
+var homejs = true;

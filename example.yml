@@ -2,15 +2,20 @@
 config:
   src: src/example      # which folder to put files
   download: false       # if file isn't exists, it will be downloaded always
-  minify: true          # use uglifier and sass engine to minify files
+  minify: false          # use uglifier and sass engine to minify files
 
 # Files to be download and writen in lib.js
 libs:
   # base libraries
-  sizzle: https://raw.github.com/jquery/sizzle/master/sizzle.js  # you use `LazyLoad.sizzle(function(){ // something should sizzle to do }`
+  sizzle: https://raw.github.com/jquery/sizzle/master/sizzle.js  # you use `lib.sizzle(function(){ // something should sizzle to do }`
   jquery: https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js
   underscore: http://documentcloud.github.com/underscore/underscore.js
+  
+  # localfile
   localfile: local/localfile.js
+  
+  # .rb
+  i18n: local/i18n.rb
   
   # jquery plugins
   jquery-cookie:

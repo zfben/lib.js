@@ -41,10 +41,10 @@ def download url, path
 end
 
 def download_source lib, url
+  path = File.join(@config['src/source'], lib, File.basename(url))
+  dir = File.dirname(path)
+  system('mkdir ' + dir) unless File.exists?(dir)
   if url =~ /:\/\//
-    path = File.join(@config['src/source'], lib, File.basename(url))
-    dir = File.dirname(path)
-    system('mkdir ' + dir) unless File.exists?(dir)
     if File.extname(path) == '.css'
       css = download_css(lib, url, File.join(dir, File.basename(url)))
       File.open(path, 'w'){ |f| f.write(css) }
@@ -53,7 +53,28 @@ def download_source lib, url
       download url, path
     end
   else
-    path = url
+    if File.extname(url) == '.rb'
+      script = eval(File.read(url))
+      css = ''
+      js = ''
+      script.each do | type, content |
+        case type
+          when :css
+            css << content
+          when :js
+            js << content
+        end
+      end
+      if css != ''
+        path = File.join(dir, File.basename(url, '.rb') << '.css')
+        File.open(path, 'w'){ |f| f.write(css) }
+      elsif js != ''
+        path = File.join(dir, File.basename(url, '.rb') << '.js')
+        File.open(path, 'w'){ |f| f.write(js) }
+      end
+    else
+      path = url
+    end
   end
   return path
 end

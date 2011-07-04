@@ -41,6 +41,12 @@
             });
           });
         });
+        asyncTest('load i18n', 1, function(){
+          lib.i18n(function(){
+            ok(i18n, 'i18n');
+            start();
+          });
+        });
         return true;
       }
     </script>
