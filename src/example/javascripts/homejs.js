@@ -1,2 +1,1 @@
-var homejs = true;
-;
+var homejs=!0

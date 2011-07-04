@@ -1,2 +1,1 @@
-var i18n={"hello":"你好"}
-;
+var i18n={hello:"你好"}
