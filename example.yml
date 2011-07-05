@@ -18,6 +18,12 @@ libs:
   # .rb
   i18n: local/i18n.rb
   
+  # .sass
+  sass: local/sass.sass
+  
+  # .coffee
+  coffee: local/coffee.coffee
+  
   # jquery plugins
   jquery-cookie:
     - jquery

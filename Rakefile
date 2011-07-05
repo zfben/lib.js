@@ -21,7 +21,7 @@ def minify source, type
       when :js
         min = Uglifier.compile(source, :copyright => false)
       when :css
-        min = Sass::Engine.new(Sass::CSS.new(source).render(:sass), :syntax => :sass, :style => :compressed, :cache => false).render
+        min = Sass::Engine.new(Sass::CSS.new(source).render(:sass), { :syntax => :sass, :style => :compressed, :cache => false }).render
     end
     if min.length > 10
       return min
@@ -53,25 +53,38 @@ def download_source lib, url
       download url, path
     end
   else
-    if File.extname(url) == '.rb'
-      script = eval(File.read(url))
-      css = ''
-      js = ''
-      script.each do | type, content |
-        case type
-          when :css
-            css << content
-          when :js
-            js << content
+    case File.extname(url)
+      when '.rb'
+        script = eval(File.read(url))
+        css = ''
+        js = ''
+        script.each do | type, content |
+          case type
+            when :css
+              css << content
+            when :js
+              js << content
+          end
         end
-      end
-      if css != ''
-        path = File.join(dir, File.basename(url, '.rb') << '.css')
+        if css != ''
+          path = File.join(dir, File.basename(url, '.rb') << '.css')
+          File.open(path, 'w'){ |f| f.write(css) }
+        elsif js != ''
+          path = File.join(dir, File.basename(url, '.rb') << '.js')
+          File.open(path, 'w'){ |f| f.write(js) }
+        end
+      when '.sass'
+        css = Sass::Engine.new(File.read(url), { :syntax => :sass }.merge(Compass.sass_engine_options)).render
+        path = File.join(dir, File.basename(url, '.sass') << '.css')
         File.open(path, 'w'){ |f| f.write(css) }
-      elsif js != ''
-        path = File.join(dir, File.basename(url, '.rb') << '.js')
-        File.open(path, 'w'){ |f| f.write(js) }
-      end
+      when '.scss'
+        css = Sass::Engine.new(File.read(url), { :syntax => :scss }.merge(Compass.sass_engine_options)).render
+        path = File.join(dir, File.basename(url, '.sass') << '.css')
+        File.open(path, 'w'){ |f| f.write(css) }
+      when '.coffee'
+        coffee = CoffeeScript.compile(File.read(url))
+        path = File.join(dir, File.basename(url, '.coffee') << '.js')
+        File.open(path, 'w'){ |f| f.write(coffee) }
     else
       path = url
     end
@@ -119,6 +132,8 @@ task :build, :config do |task, args|
     p 'File is not exists!'
     exit!
   end
+  
+  p '== Starting Build'
   
   # Get config.yml
 
@@ -177,6 +192,7 @@ task :build, :config do |task, args|
     }.compact
     if css != ''
       file = File.join(@config['src/source'], lib + '.css')
+      css = minify(css, :css) if @config['minify'] == true
       File.open(file, 'w'){ |f| f.write(css) }
       path.push(file)
     end
@@ -294,6 +310,7 @@ task :build, :config do |task, args|
     end
   end
   File.open(File.join(@config['src/javascripts'], 'lib.js'), 'w'){ |f| f.write(libjs) }
+  p '== End Build'
 end
 
 desc 'watch files changes and auto build'
@@ -307,8 +324,12 @@ task :watch, :config do |task, args|
     exit!
   end
   
+  p '== Starting Watch, You can use Ctrl+C to close it'
+  
   script = Watchr::Script.new
   script.watch(File.join(YAML.load(File.read(args[:config]))['config']['watchr'], '.*')){ Rake::Task['build'].invoke(args[:config]) }
   contrl = Watchr::Controller.new(script, Watchr.handler.new)
   contrl.run
+  
+  p '== End Watch'
 end

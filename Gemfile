@@ -1,8 +1,8 @@
 source 'http://rubygems.org'
 
 gem 'therubyracer'
+gem 'coffee-script'
 gem 'uglifier'
-gem 'sass'
+gem 'compass'
 gem 'sinatra'
-gem 'rev'
 gem 'watchr'
