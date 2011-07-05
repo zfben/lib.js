@@ -295,3 +295,20 @@ task :build, :config do |task, args|
   end
   File.open(File.join(@config['src/javascripts'], 'lib.js'), 'w'){ |f| f.write(libjs) }
 end
+
+desc 'watch files changes and auto build'
+task :watch, :config do |task, args|
+  args = {
+    :config => 'example.yml'
+  }.merge(args.to_hash)
+  
+  unless File.exists?(args[:config])
+    p 'File is not exists!'
+    exit!
+  end
+  
+  script = Watchr::Script.new
+  script.watch(File.join(YAML.load(File.read(args[:config]))['config']['watchr'], '.*')){ Rake::Task['build'].invoke(args[:config]) }
+  contrl = Watchr::Controller.new(script, Watchr.handler.new)
+  contrl.run
+end

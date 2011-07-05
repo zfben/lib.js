@@ -1,6 +1,7 @@
 # Basic Settings
 config:
-  src: src/example      # which folder to put files
+  watchr: local         # which folder to watchr
+  src: src/example      # which folder to save files
   download: false       # if file isn't exists, it will be downloaded always
   minify: true          # use uglifier and sass engine to minify files
 
