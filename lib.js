@@ -66,10 +66,10 @@
   };
   
   // leave api to control loaded
-  this._lib = function(){
+  this.lib.loaded = function(){
     var args = Array.prototype.slice.call(arguments);
     switch(args.shift()){
-      case 'loaded':
+      case 'add':
         for(i in args){
           var source = args[i];
           if(typeof loaded[source] === 'undefined'){
@@ -77,7 +77,7 @@
           }
         }
         break;
-      case 'unload':
+      case 'del':
         for(i in args){
           var source = args[i];
           if(typeof loaded[source] !== 'undefined'){

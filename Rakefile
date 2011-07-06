@@ -292,7 +292,7 @@ task :build, :config do |task, args|
       end
       if js != ''
         files = files.join("','")
-        js << "_lib('loaded','#{files}');"
+        js << "if(lib){lib.loaded('add','#{files}');}"
         file = File.join(@config['src/javascripts'], name + '.js')
         File.open(file, 'w'){ |f| f.write(js) }
         path.push(file)
