@@ -122,14 +122,16 @@ def download_images lib, url, path
   }.compact
 end
 
-desc 'build files from lib.yml'
+desc 'build files from config.yml'
 task :build, :config do |task, args|
   args = {
-    :config => 'example.yml'
+    :config => 'example'
   }.merge(args.to_hash)
   
+  args[:config] = args[:config] + '.yml'
+  
   unless File.exists?(args[:config])
-    p 'File is not exists!'
+    p args[:config] + ' is not exists!'
     exit!
   end
   
@@ -163,6 +165,10 @@ task :build, :config do |task, args|
   
   @preload = DATA['preload']
   
+  if @config.has_key?('before')
+    load @config['before']
+  end
+  
   # Download source
   @libs.each do |lib, url|
     if url.class == String
@@ -191,13 +197,13 @@ task :build, :config do |task, args|
       file
     }.compact
     if css != ''
-      file = File.join(@config['src/source'], lib + '.css')
+      p file = File.join(@config['src/source'], lib + '.css')
       css = minify(css, :css) if @config['minify'] == true
       File.open(file, 'w'){ |f| f.write(css) }
       path.push(file)
     end
     if js != ''
-      file = File.join(@config['src/source'], lib + '.js')
+      p file = File.join(@config['src/source'], lib + '.js')
       js = minify(js, :js) if @config['minify'] == true
       File.open(file, 'w'){ |f| f.write(js) }
       path.push(file)
@@ -292,7 +298,7 @@ task :build, :config do |task, args|
       end
       if js != ''
         files = files.join("','")
-        js << "if(lib){lib.loaded('add','#{files}');}"
+        js << "if(typeof lib==='function'){lib.loaded('add','#{files}');}"
         file = File.join(@config['src/javascripts'], name + '.js')
         File.open(file, 'w'){ |f| f.write(js) }
         path.push(file)
@@ -310,26 +316,34 @@ task :build, :config do |task, args|
     end
   end
   File.open(File.join(@config['src/javascripts'], 'lib.js'), 'w'){ |f| f.write(libjs) }
+  
+  if @config.has_key?('after')
+    load @config['after']
+  end
+  
   p '== End Build'
 end
 
 desc 'watch files changes and auto build'
 task :watch, :config do |task, args|
   args = {
-    :config => 'example.yml'
+    :config => 'example'
   }.merge(args.to_hash)
   
+  config = args[:config]
+  
+  args[:config] = args[:config] + '.yml'
+  
   unless File.exists?(args[:config])
-    p 'File is not exists!'
+    p args[:config] + ' is not exists!'
     exit!
   end
   
-  p '== Starting Watch, You can use Ctrl+C to close it'
+  p path = File.realpath(YAML.load(File.read(args[:config]))['config']['watchr']) + '/*'
   
   script = Watchr::Script.new
-  script.watch(File.join(YAML.load(File.read(args[:config]))['config']['watchr'], '.*')){ Rake::Task['build'].invoke(args[:config]) }
+  script.watch(path){ Rake::Task['build'].invoke(config) }
   contrl = Watchr::Controller.new(script, Watchr.handler.new)
   contrl.run
-  
-  p '== End Watch'
+  p '== Starting Watch, You can use Ctrl+C to close it'
 end
