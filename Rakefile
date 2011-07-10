@@ -231,7 +231,11 @@ task :build, :config do |task, args|
         if type == 'stylesheets' && reg =~ File.read(file)
           css = File.read(file).partition_all(reg).map{ |f|
             if reg =~ f
-              f = 'url("../images/' << File.basename(f.match(reg)[1]) << '")'
+              if @config['url'] == @config['src']
+                f = 'url("../images/' << File.basename(f.match(reg)[1]) << '")'
+              else
+                f = 'url("' + @config['url'] + '/images/' << File.basename(f.match(reg)[1]) << '")'
+              end
             end
             f
           }.join('')

@@ -7,12 +7,12 @@ See qunit at http://benz303.github.com/lib.js
 == Example
 
   // load jquery
-  LazyLoad.jquery(function(){
+  lib.jquery(function(){
     // something use jquery to do
   });
   
   // load jqueryui and not duplicate load jquery
-  LazyLoad.jqueryui(function(){
+  lib.jqueryui(function(){
     // something use jqueryui to do
   });
   
