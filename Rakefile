@@ -74,11 +74,15 @@ def download_source lib, url
           File.open(path, 'w'){ |f| f.write(js) }
         end
       when '.sass'
-        css = Sass::Engine.new(File.read(url), { :syntax => :sass }.merge(Compass.sass_engine_options)).render
+        options = { :syntax => :sass, :cache => false }.merge(Compass.sass_engine_options)
+        options[:load_paths].push File.dirname(url)
+        css = Sass::Engine.new(File.read(url), options).render
         path = File.join(dir, File.basename(url, '.sass') << '.css')
         File.open(path, 'w'){ |f| f.write(css) }
       when '.scss'
-        css = Sass::Engine.new(File.read(url), { :syntax => :scss }.merge(Compass.sass_engine_options)).render
+        options = { :syntax => :scss, :cache => false }.merge(Compass.sass_engine_options)
+        options[:load_paths].push File.dirname(url)
+        css = Sass::Engine.new(File.read(url), options).render
         path = File.join(dir, File.basename(url, '.sass') << '.css')
         File.open(path, 'w'){ |f| f.write(css) }
       when '.coffee'
