@@ -1,3 +1,4 @@
+/* @import src/example/.source/coffee/coffee.coffee */
 (function() {
   var Animal, Horse, Snake, sam, tom;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {

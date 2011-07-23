@@ -4,6 +4,7 @@ config:
   src: src/example      # which folder to save files
   download: false       # if file isn't exists, it will be downloaded always
   minify: true          # use uglifier and sass engine to minify files
+  changeImageUrl: true  # change image urls in css
 
 # Files to be download and writen in lib.js
 libs:
@@ -17,6 +18,9 @@ libs:
   
   # .rb
   i18n: local/i18n.rb
+  
+  # import css
+  import: local/import.css
   
   # .sass
   sass: local/sass.sass

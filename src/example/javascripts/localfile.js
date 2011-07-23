@@ -1,1 +1,1 @@
-window.localfile=!0
+window.localfile=!0,window.localfile=!0

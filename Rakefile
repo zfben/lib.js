@@ -4,6 +4,8 @@ Bundler.require
 require 'yaml'
 require 'sass/css'
 
+require File.realpath('.lib.rb')
+
 class String
   def partition_all(reg)
     r = self.partition(reg)
@@ -14,118 +16,11 @@ class String
   end
 end
 
-def minify source, type
-  if source.length > 10
-    min = ''
-    case type
-      when :js
-        min = Uglifier.compile(source, :copyright => false)
-      when :css
-        min = Sass::Engine.new(Sass::CSS.new(source).render(:sass), { :syntax => :sass, :style => :compressed, :cache => false }).render
-    end
-    if min.length > 10
-      return min
-    end
-  end
-  return source
-end
-
-def download url, path
-  if @config['download'] == true || !File.exists?(path)
-    unless system 'wget ' + url + ' -O ' + path + ' -N'
-      p url + ' download fail!'
-      system('rm ' + path)
-      exit!
-    end
-  end
-end
-
-def download_source lib, url
-  path = File.join(@config['src/source'], lib, File.basename(url))
-  dir = File.dirname(path)
-  system('mkdir ' + dir) unless File.exists?(dir)
-  if url =~ /:\/\//
-    if File.extname(path) == '.css'
-      css = download_css(lib, url, File.join(dir, File.basename(url)))
-      File.open(path, 'w'){ |f| f.write(css) }
-      download_images(lib, url, path)
-    else
-      download url, path
-    end
-  else
-    case File.extname(url)
-      when '.rb'
-        script = eval(File.read(url))
-        css = ''
-        js = ''
-        script.each do | type, content |
-          case type
-            when :css
-              css << content
-            when :js
-              js << content
-          end
-        end
-        if css != ''
-          path = File.join(dir, File.basename(url, '.rb') << '.css')
-          File.open(path, 'w'){ |f| f.write(css) }
-        elsif js != ''
-          path = File.join(dir, File.basename(url, '.rb') << '.js')
-          File.open(path, 'w'){ |f| f.write(js) }
-        end
-      when '.sass'
-        options = { :syntax => :sass, :cache => false }.merge(Compass.sass_engine_options)
-        options[:load_paths].push File.dirname(url)
-        css = Sass::Engine.new(File.read(url), options).render
-        path = File.join(dir, File.basename(url, '.sass') << '.css')
-        File.open(path, 'w'){ |f| f.write(css) }
-      when '.scss'
-        options = { :syntax => :scss, :cache => false }.merge(Compass.sass_engine_options)
-        options[:load_paths].push File.dirname(url)
-        css = Sass::Engine.new(File.read(url), options).render
-        path = File.join(dir, File.basename(url, '.sass') << '.css')
-        File.open(path, 'w'){ |f| f.write(css) }
-      when '.coffee'
-        coffee = CoffeeScript.compile(File.read(url))
-        path = File.join(dir, File.basename(url, '.coffee') << '.js')
-        File.open(path, 'w'){ |f| f.write(coffee) }
-    else
-      path = url
-    end
-  end
-  return path
-end
-
-def download_css lib, url, path
-  download url, path
-  reg = /@import[^"]+"([^"]+)"[^;]*;/
-  return File.read(path).partition_all(reg).map{ |f|
-    if reg =~ f
-      sub = File.join(File.dirname(path), reg.match(f)[1])
-      f = download_css(lib, File.join(File.dirname(url), reg.match(f)[1]), sub)
-    end
-    f
-  }.join "\n"
-end
-
-def download_images lib, url, path
-  reg = /url\("?'?([^'")]+)'?"?\)/
-  return File.read(path).partition_all(reg).map{ |f|
-    if reg =~ f
-      sub = File.join(File.dirname(path), reg.match(f)[1])
-      suburl = File.dirname(url) + '/' + reg.match(f)[1]
-      unless File.exists?(File.dirname(sub))
-        system('mkdir ' + File.dirname(sub))
-      end
-      download(suburl, sub)
-      @libs[lib].push(sub)
-    else
-      f = nil
-    end
-    f
-  }.compact
-end
-
+# build files
+# 1. load(download & copy) files to .source
+# 2. convert files type to .sass, .js and image types
+# 3. merge sass and js files into one css file and one js file
+# 4. generate lib.js and minfy files
 desc 'build files from config.yml'
 task :build, :config do |task, args|
   args = {
@@ -139,7 +34,7 @@ task :build, :config do |task, args|
     exit!
   end
   
-  p '== Starting Build'
+  p '== Starting Build @' + args[:config]
   
   # Get config.yml
 
@@ -153,12 +48,17 @@ task :build, :config do |task, args|
   }.merge(DATA['config'])
 
   @config['url'] = @config['src'] unless @config.has_key?('url')
-  @config['src/source'] = File.join(@config['src'], '.source') unless @config.has_key?('src/source')
+  system('mkdir ' + @config['src']) unless File.exists?(@config['src'])
   
-  ['source', 'javascripts', 'stylesheets', 'images'].each do |path|
-    @config['src/' + path] = File.join(@config['src'], path) unless @config.has_key?('src/' + path)
+  ['source'].each do |path|
+    @config['src/' + path] = File.join(@config['src'], '.' + path) unless @config.has_key?('src/' + path)
+    system('mkdir ' + @config['src/' + path]) unless File.exists?(@config['src/' + path])
   end
-  [@config['src'], @config['src/source'], @config['src/javascripts'], @config['src/stylesheets'], @config['src/images']].each{ |f| system('mkdir ' + f) unless File.exists?(f) }
+  
+  ['javascripts', 'stylesheets', 'images'].each do |path|
+    @config['src/' + path] = File.join(@config['src'], path) unless @config.has_key?('src/' + path)
+    system('mkdir ' + @config['src/' + path]) unless File.exists?(@config['src/' + path])
+  end
 
   # Merge default libs
   @libs = {
@@ -173,54 +73,105 @@ task :build, :config do |task, args|
     load @config['before']
   end
   
-  # Download source
-  @libs.each do |lib, url|
-    if url.class == String
-      @libs[lib] = download_source(lib, url)
-    else
-      @libs[lib] = url.map{ |u| download_source(lib, u) }
-    end
-  end
   
-  # Merge source
-  @libs.each do |lib, path|
+  p '== [1/2] Starting Progress Source =='
+  length = @libs.length
+  num = 0
+  @libs.each do |name, urls|
+    num = num + 1
+    p "[#{num}/#{length}] #{name}"
+    urls = [urls] unless urls.class == Array
+    lib = []
+    urls.each do |url|
+      if @libs.has_key?(url)
+        lib.push(url)
+      else
+        path = File.join(@config['src/source'], name, File.basename(url))
+        dir = File.dirname(path)
+        system('mkdir ' + dir) unless File.exists?(dir)
+        download url, path
+        case get_filetype(path)
+          when 'css'
+            css = css_import(url, dir)
+            File.open(path, 'w'){ |f| f.write(css) }
+            images = download_images(name, url, path)
+            if images.length > 0
+              lib.push images
+            end
+          when 'rb'
+            script = eval(File.read(path))
+            rb_path = path
+            css = ''
+            js = ''
+            script.each do | type, content |
+              case type
+                when :css
+                  css << content
+                when :js
+                  js << content
+              end
+            end
+            if css != ''
+              path = File.join(dir, File.basename(path, '.rb') << '.css')
+              File.open(path, 'w'){ |f| f.write("/* @import #{rb_path} */\n" + css) }
+            elsif js != ''
+              path = File.join(dir, File.basename(path, '.rb') << '.js')
+              File.open(path, 'w'){ |f| f.write("/* @import #{rb_path} */\n" + js) }
+            end
+          when 'sass'
+            options = { :syntax => :sass, :cache => false }.merge(Compass.sass_engine_options)
+            options[:load_paths].push File.dirname(path), File.dirname(url)
+            css = "/* @import #{path} */\n" + Sass::Engine.new(File.read(path), options).render
+            path = File.join(dir, File.basename(path, '.sass') << '.css')
+            File.open(path, 'w'){ |f| f.write(css) }
+          when 'scss'
+            options = { :syntax => :scss, :cache => false }.merge(Compass.sass_engine_options)
+            options[:load_paths].push File.dirname(path), File.dirname(url)
+            css = "/* @import #{path} */\n" + Sass::Engine.new(File.read(path), options).render
+            path = File.join(dir, File.basename(path, '.sass') << '.css')
+            File.open(path, 'w'){ |f| f.write(css) }
+          when 'coffee'
+            js = "/* @import #{path} */\n" + CoffeeScript.compile(File.read(path))
+            path = File.join(dir, File.basename(path, '.coffee') << '.js')
+            File.open(path, 'w'){ |f| f.write(js) }
+          else
+            lib.push url
+        end
+        lib.push(path)
+      end
+    end
+    lib = lib.flatten
+    
     css = ''
     js = ''
-    path = [path] unless path.class == Array
-    path = path.map{ |file|
+    lib = lib.map{ |file|
       if File.exists?(file)
+        content = "/* @import #{file} */\n" + File.read(file)
         case File.extname(file)
           when '.css'
-            css << File.read(file)
+            css << content
             file = nil
           when '.js'
-            js << File.read(file) << ';'
+            js << content << ';'
             file = nil
         end
       end
       file
     }.compact
     if css != ''
-      p file = File.join(@config['src/source'], lib + '.css')
-      css = minify(css, :css) if @config['minify'] == true
+      file = File.join(@config['src/source'], name + '.css')
       File.open(file, 'w'){ |f| f.write(css) }
-      path.push(file)
+      lib.push(file)
     end
     if js != ''
-      p file = File.join(@config['src/source'], lib + '.js')
-      js = minify(js, :js) if @config['minify'] == true
+      file = File.join(@config['src/source'], name + '.js')
       File.open(file, 'w'){ |f| f.write(js) }
-      path.push(file)
+      lib.push(file)
     end
-    path = path[0] if path.length == 1
-    @libs[lib] = path
-  end
-  
-  @libs.each do |lib, path|
-    path = [path] if path.class != Array
-    @libs[lib] = path.map{ |subpath|
-      if File.exists?(subpath)
-        case File.extname(subpath)
+    
+    @libs[name] = lib.map{ |file|
+      if File.exists?(file)
+        case File.extname(file)
           when '.js'
             type = 'javascripts'
           when '.css'
@@ -228,12 +179,16 @@ task :build, :config do |task, args|
           else
             type = 'images'
         end
-        file = File.join(@config['src/' + type], File.basename(subpath))
-        system('cp ' + subpath + ' ' + file)
-        subpath = file
+        
+        path = File.join(@config['src/' + type], File.basename(file))
+        
+        p '=> ' + path
+        
+        system('cp ' + file + ' ' + path)
+        
         reg = /url\("?'?([^'")]+)'?"?\)/
-        if type == 'stylesheets' && reg =~ File.read(file)
-          css = File.read(file).partition_all(reg).map{ |f|
+        if type == 'stylesheets' && @config['changeImageUrl'] && reg =~ File.read(path)
+          css = File.read(path).partition_all(reg).map{ |f|
             if reg =~ f
               if @config['url'] == @config['src']
                 f = 'url("../images/' << File.basename(f.match(reg)[1]) << '")'
@@ -243,24 +198,33 @@ task :build, :config do |task, args|
             end
             f
           }.join('')
-          css = minify(css, :css) if @config['minify'] == true
-          File.open(file, 'w'){ |f| f.write(css) }
+          File.open(path, 'w'){ |f| f.write(css) }
         end
         if type == 'images'
-          subpath = nil
+          path = nil
         end
-        File.open(file, 'w'){ |f| f.write(minify(File.read(file), :js)) } if @config['minify'] == true && type == 'javascript'
+        
+        if @config['minify']
+          if type == 'stylesheets'
+            min = minify(File.read(path), :css)
+            File.open(path, 'w'){ |f| f.write(min) }
+          end
+          if type == 'javascripts'
+            min = minify(File.read(path), :js)
+            File.open(path, 'w'){ |f| f.write(min) }
+          end
+        end
       else
-        subpath = @libs[subpath]
+        path = @libs[path]
       end
-      subpath
+      path
     }.compact.flatten
-    @libs[lib] = @libs[lib][0] if @libs[lib].length == 1
+    @libs[name] = @libs[name][0] if @libs[name].length == 1
   end
   
+  p '== [2/2] Generate lib.js =='
   libjs = File.read(@libs['lazyload']) << ';' << (@config['minify'] ? minify(File.read('lib.js'), :js) : File.read('lib.js')) << ';'
   
-  # Merge js and css files to one js and one css.
   @libs.each do |lib, path|
     css = []
     js = []
@@ -329,7 +293,7 @@ task :build, :config do |task, args|
     load @config['after']
   end
   
-  p '== End Build'
+  p '== End Build =='
 end
 
 desc 'watch files changes and auto build'
