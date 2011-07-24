@@ -1822,4 +1822,5 @@
 var homejs = false;
 ;/* @import src/example/.source/homejs/homejs.js */
 var homejs = false;
-;;if(typeof lib==='function'){lib.loaded('add','src/example/javascripts/underscore.js','src/example/javascripts/backbone.js','src/example/javascripts/homejs.js');}
+;;
+if(typeof lib === 'function'){lib.loaded('add', 'src/example/javascripts/underscore.js','src/example/javascripts/backbone.js','src/example/javascripts/homejs.js');}

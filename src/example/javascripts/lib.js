@@ -383,120 +383,161 @@ LazyLoad = (function (doc) {
 
   };
 })(this.document);
-;;(function(){
-  // save loaded source to `loaded`
-  var loaded = {};
-  
-  // lib start here
-  this.lib = function(){
-    
-    // progress arguments to each type
-    var args = arguments, css = [], js = [], funcs = [];
-    for(i in args){
-      var arg = args[i]
-      if(typeof arg === 'string'){
-        if(typeof loaded[arg] === 'undefined'){
-          if(/\.css[^\.]*$/.test(arg)){
-            css.push(arg);
-          }else{
-            js.push(arg);
-          }
+;;(function() {
+  var lib, libs, loaded;
+  loaded = {};
+  libs = {};
+  lib = function() {
+    var css, func, funcs, js, source_types, _i, _len;
+    css = [];
+    js = [];
+    funcs = [];
+    source_types = function(args) {
+      var arg, _i, _len;
+      for (_i = 0, _len = args.length; _i < _len; _i++) {
+        arg = args[_i];
+        switch (typeof arg) {
+          case 'string':
+            if (typeof loaded[arg] === 'undefined') {
+              if (arg.indexOf(' ') >= 0) {
+                source_types(arg.split(' '));
+              } else {
+                if (typeof libs[arg] !== 'undefined') {
+                  source_types(libs[arg]);
+                }
+                if (/\.css[^\.]*$/.test(arg)) {
+                  css.push(arg);
+                }
+                if (/\.js[^\.]*$/.test(arg)) {
+                  js.push(arg);
+                }
+              }
+            }
+            break;
+          case 'function':
+            funcs.push(arg);
+            break;
+          default:
+            if (typeof arg.length !== 'undefined') {
+              source_types(arg);
+            }
         }
-      }else{
-        funcs.push(arg);
-      }
-    }
-    
-    // progress css
-    if(css.length > 0){
-      if(js.length === 0 && funcs.length > 0){
-        LazyLoad.css(css, function(){
-          for(i in css){
-            loaded[css[i]] = true
-          }
-          for(i in funcs){
-            funcs[i]();
-          }
-        });
-      }else{
-        LazyLoad.css(css, function(){
-          for(i in css){
-            loaded[css[i]] = true
-          }
-        });
-      }
-    }
-    
-    // progress js
-    if(js.length > 0){
-      if(funcs.length > 0){
-        LazyLoad.js(js, function(){
-          for(i in js){
-            loaded[js[i]] = true
-          }
-          for(i in funcs){
-            funcs[i]();
-          }
-        });
-      }else{
-        LazyLoad.js(js, function(){
-          for(i in js){
-            loaded[js[i]] = true
-          }
-        });
-      }
-    }
-    
-    // if everything is loaded, run funcs
-    if(css.length === 0 && js.length === 0 && funcs.length > 0){
-      for(i in funcs){
-        funcs[i]();
       }
       return true;
+    };
+    source_types(arguments);
+    if (css.length > 0) {
+      if (js.length === 0 && funcs.length > 0) {
+        LazyLoad.css(css, function() {
+          var func, url, _i, _j, _len, _len2, _results;
+          for (_i = 0, _len = css.length; _i < _len; _i++) {
+            url = css[_i];
+            loaded[url] = true;
+          }
+          _results = [];
+          for (_j = 0, _len2 = funcs.length; _j < _len2; _j++) {
+            func = funcs[_j];
+            _results.push(func());
+          }
+          return _results;
+        });
+      } else {
+        LazyLoad.css(css, function() {
+          var url, _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = css.length; _i < _len; _i++) {
+            url = css[_i];
+            _results.push(loaded[url] = true);
+          }
+          return _results;
+        });
+      }
     }
-    
-    return false;
+    if (js.length > 0) {
+      if (funcs.length > 0) {
+        LazyLoad.js(js, function() {
+          var func, url, _i, _j, _len, _len2, _results;
+          for (_i = 0, _len = js.length; _i < _len; _i++) {
+            url = js[_i];
+            loaded[url] = true;
+          }
+          _results = [];
+          for (_j = 0, _len2 = funcs.length; _j < _len2; _j++) {
+            func = funcs[_j];
+            _results.push(func());
+          }
+          return _results;
+        });
+      } else {
+        LazyLoad.js(js, function() {
+          var url, _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = js.length; _i < _len; _i++) {
+            url = js[_i];
+            _results.push(loaded[url] = true);
+          }
+          return _results;
+        });
+      }
+    }
+    if (css.length === 0 && js.length === 0 && funcs.length > 0) {
+      for (_i = 0, _len = funcs.length; _i < _len; _i++) {
+        func = funcs[_i];
+        func();
+      }
+    }
+    return {
+      css: css,
+      js: js,
+      funcs: funcs
+    };
   };
-  
-  // leave api to control loaded
-  this.lib.loaded = function(){
-    var args = Array.prototype.slice.call(arguments);
-    switch(args.shift()){
+  lib.loaded = function() {
+    var arg, args, _i, _j, _len, _len2;
+    args = Array.prototype.slice.call(arguments);
+    switch (args.shift()) {
       case 'add':
-        for(i in args){
-          var source = args[i];
-          if(typeof loaded[source] === 'undefined'){
-            loaded[source] = true;
+        for (_i = 0, _len = args.length; _i < _len; _i++) {
+          arg = args[_i];
+          if (typeof loaded[arg] === 'undefined') {
+            loaded[arg] = true;
           }
         }
         break;
       case 'del':
-        for(i in args){
-          var source = args[i];
-          if(typeof loaded[source] !== 'undefined'){
-            delete(loaded[source]);
+        for (_j = 0, _len2 = args.length; _j < _len2; _j++) {
+          arg = args[_j];
+          if (typeof loaded[arg] !== 'undefined') {
+            delete loaded[arg];
           }
         }
-        break;
     }
     return loaded;
-  }
-})();
-;lib['lazyload']=function(callback){lib('src/example/javascripts/lazyload.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['sizzle']=function(callback){lib('src/example/javascripts/sizzle.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['jquery']=function(callback){lib('src/example/javascripts/jquery.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['underscore']=function(callback){lib('src/example/javascripts/underscore.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['localfile']=function(callback){lib('src/example/javascripts/localfile.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['i18n']=function(callback){lib('src/example/javascripts/i18n.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['import']=function(callback){lib('src/example/stylesheets/import.css',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['sass']=function(callback){lib('src/example/stylesheets/sass.css',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['coffee']=function(callback){lib('src/example/javascripts/coffee.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['jquery-cookie']=function(callback){lib('src/example/javascripts/jquery.js','src/example/javascripts/jquery-cookie.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['jqueryui']=function(callback){lib('src/example/stylesheets/jqueryui.css','src/example/javascripts/jquery.js','src/example/javascripts/jqueryui.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['qunit']=function(callback){lib('src/example/stylesheets/qunit.css','src/example/javascripts/jquery.js','src/example/javascripts/qunit.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['colorbox']=function(callback){lib('src/example/stylesheets/colorbox.css','src/example/javascripts/jquery.js','src/example/javascripts/colorbox.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['cleditor']=function(callback){lib('src/example/stylesheets/cleditor.css','src/example/javascripts/jquery.js','src/example/javascripts/cleditor.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['jqGrid']=function(callback){lib('src/example/stylesheets/jqueryui.css','src/example/stylesheets/jqGrid.css','src/example/javascripts/jquery.js','src/example/javascripts/jqueryui.js','src/example/javascripts/jqGrid.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['backbone']=function(callback){lib('src/example/javascripts/underscore.js','src/example/javascripts/backbone.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['homejs']=function(callback){lib('src/example/javascripts/homejs.js',function(){if(typeof callback!=='undefined'){callback();}});};
-lib['home']=function(callback){lib('src/example/javascripts/home.js',function(){if(typeof callback!=='undefined'){callback();}});};lib['qunit']();
+  };
+  lib.libs = function(new_libs) {
+    var name, urls;
+    for (name in new_libs) {
+      urls = new_libs[name];
+      if (urls !== null) {
+        libs[name] = urls;
+        (function(name, urls) {
+          return lib[name] = function() {
+            return lib(urls, arguments);
+          };
+        })(name, urls);
+      } else {
+        delete libs[name];
+        delete lib[name];
+      }
+    }
+    return libs;
+  };
+  window.lib = lib;
+}).call(this);
+
+/* libs */
+lib.libs({"lazyload":"src/example/javascripts/lazyload.js","sizzle":"src/example/javascripts/sizzle.js","jquery":"src/example/javascripts/jquery.js","underscore":"src/example/javascripts/underscore.js","localfile":"src/example/javascripts/localfile.js","i18n":"src/example/javascripts/i18n.js","import":"src/example/stylesheets/import.css","sass":"src/example/stylesheets/sass.css","coffee":"src/example/javascripts/coffee.js","jquery-cookie":["src/example/javascripts/jquery.js","src/example/javascripts/jquery-cookie.js"],"jqueryui":["src/example/javascripts/jquery.js","src/example/stylesheets/jqueryui.css","src/example/javascripts/jqueryui.js"],"qunit":["src/example/javascripts/jquery.js","src/example/stylesheets/qunit.css","src/example/javascripts/qunit.js"],"colorbox":["src/example/javascripts/jquery.js","src/example/stylesheets/colorbox.css","src/example/javascripts/colorbox.js"],"cleditor":["src/example/javascripts/jquery.js","src/example/stylesheets/cleditor.css","src/example/javascripts/cleditor.js"],"jqGrid":["src/example/javascripts/jquery.js","src/example/stylesheets/jqueryui.css","src/example/javascripts/jqueryui.js","src/example/stylesheets/jqGrid.css","src/example/javascripts/jqGrid.js"],"backbone":["src/example/javascripts/underscore.js","src/example/javascripts/backbone.js"],"homejs":"src/example/javascripts/homejs.js"});
+/* bundle */
+lib.libs({"home":["src/example/javascripts/home.js"]});
+/* preload */
+lib('qunit');

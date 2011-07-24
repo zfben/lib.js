@@ -75,11 +75,11 @@ libs:
   homejs:
     - local/homejs.js
 
-# Will be load after lib.js loaded
-preload:
-  - qunit
-
 bundle:
   home:
     - backbone
     - homejs
+    
+# Will be load after lib.js loaded
+preload:
+  - qunit

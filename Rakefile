@@ -223,25 +223,27 @@ task :build, :config do |task, args|
   end
   
   p '== [2/2] Generate lib.js =='
-  libjs = File.read(@libs['lazyload']) << ';' << (@config['minify'] ? minify(File.read('lib.js'), :js) : File.read('lib.js')) << ';'
+  libjs = File.read(@libs['lazyload']) << ';'
+  if @config['minify']
+    libjs << minify(CoffeeScript.compile(File.read('lib.coffee')), :js)
+  else
+    libjs << CoffeeScript.compile(File.read('lib.coffee'))
+  end
   
   @libs.each do |lib, path|
-    css = []
-    js = []
     path = [path] unless path.class == Array
-    path = path.each do |url|
+    path = path.map{ |url|
       url = url.gsub(@config['src'], @config['url'])
       case File.extname(url)
-        when '.css'
-          css.push url
-        when '.js'
-          js.push url
+        when '.css', '.js'
+        else
+          url = nil
       end
-    end
-    source = (css + js).join("','")
-    libjs << "lib['#{lib}']=function(callback){lib('#{source}',function(){if(typeof callback!=='undefined'){callback();}});};"
-    libjs << "\n" if @config['minify'] == false
+      url
+    }.compact
   end
+  
+  libjs << "\n/* libs */\nlib.libs(#{@libs.to_json});"
   
   if @bundle != nil && @bundle.length > 0
     @bundle.each do |name, libs|
@@ -272,23 +274,25 @@ task :build, :config do |task, args|
       
       if js != ''
         files = files.join("','")
-        js << "if(typeof lib==='function'){lib.loaded('add','#{files}');}"
+        js << "\nif(typeof lib === 'function'){lib.loaded('add', '#{files}');}"
         file = File.join(@config['src/javascripts'], name + '.js')
         File.open(file, 'w'){ |f| f.write(js) }
         path.push(file)
       end
       
       if path.length > 0
-        code = path.join("','")
-        libjs << "lib['#{name}']=function(callback){lib('#{code}',function(){if(typeof callback!=='undefined'){callback();}});};"
+        path = path[0] if path.length == 0
+        @bundle[name] = path
+      else
+        @bundle.delete(name)
       end
     end
+    
+    libjs << "\n/* bundle */\nlib.libs(#{@bundle.to_json});"
   end
   
   if @preload.class == Array && @preload.length > 0
-    @preload.each do |lib|
-      libjs << "lib['#{lib}']();"
-    end
+    libjs << "\n/* preload */\nlib('#{@preload.join(' ')}');"
   end
   File.open(File.join(@config['src/javascripts'], 'lib.js'), 'w'){ |f| f.write(libjs) }
   
