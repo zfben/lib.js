@@ -34,7 +34,11 @@
           }
         });
       }else{
-        LazyLoad.css(css);
+        LazyLoad.css(css, function(){
+          for(i in css){
+            loaded[css[i]] = true
+          }
+        });
       }
     }
     
@@ -50,7 +54,11 @@
           }
         });
       }else{
-        LazyLoad.js(js);
+        LazyLoad.js(js, function(){
+          for(i in js){
+            loaded[js[i]] = true
+          }
+        });
       }
     }
     

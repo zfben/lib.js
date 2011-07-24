@@ -215,7 +215,7 @@ task :build, :config do |task, args|
           end
         end
       else
-        path = @libs[path]
+        path = @libs[file]
       end
       path
     }.compact.flatten
@@ -263,11 +263,13 @@ task :build, :config do |task, args|
       end
       
       path = []
+      
       if css != ''
         file = File.join(@config['src/stylesheets'], name + '.css')
         File.open(file, 'w'){ |f| f.write(css) }
         path.push(file)
       end
+      
       if js != ''
         files = files.join("','")
         js << "if(typeof lib==='function'){lib.loaded('add','#{files}');}"
@@ -275,6 +277,7 @@ task :build, :config do |task, args|
         File.open(file, 'w'){ |f| f.write(js) }
         path.push(file)
       end
+      
       if path.length > 0
         code = path.join("','")
         libjs << "lib['#{name}']=function(callback){lib('#{code}',function(){if(typeof callback!=='undefined'){callback();}});};"
