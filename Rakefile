@@ -223,7 +223,9 @@ task :build, :config do |task, args|
   end
   
   p '== [2/2] Generate lib.js =='
+  
   libjs = File.read(@libs['lazyload']) << ';'
+  
   if @config['minify']
     libjs << minify(CoffeeScript.compile(File.read('lib.coffee')), :js)
   else

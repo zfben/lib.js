@@ -1,5 +1,1 @@
-/* @import local/localfile.js */
-window.localfile = true;
-;/* @import src/example/.source/localfile/localfile.js */
-window.localfile = true;
-;
+window.localfile=!0,window.localfile=!0
