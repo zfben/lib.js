@@ -56,6 +56,7 @@ task :build, :config do |task, args|
   end
   
   ['javascripts', 'stylesheets', 'images'].each do |path|
+    @config['url/' + path] = @config['url'] + '/' + path unless @config.has_key?('url/' + path)
     @config['src/' + path] = File.join(@config['src'], path) unless @config.has_key?('src/' + path)
     system('mkdir ' + @config['src/' + path]) unless File.exists?(@config['src/' + path])
   end
@@ -193,7 +194,7 @@ task :build, :config do |task, args|
               if @config['url'] == @config['src']
                 f = 'url("../images/' << File.basename(f.match(reg)[1]) << '")'
               else
-                f = 'url("' + @config['url'] + '/images/' << File.basename(f.match(reg)[1]) << '")'
+                f = 'url("' + @config['url/images'] + File.basename(f.match(reg)[1]) << '")'
               end
             end
             f
@@ -218,7 +219,7 @@ task :build, :config do |task, args|
         path = @libs[file]
       end
       path
-    }.compact.flatten
+    }.compact.flatten.uniq
     @libs[name] = @libs[name][0] if @libs[name].length == 1
   end
   
@@ -232,20 +233,24 @@ task :build, :config do |task, args|
     libjs << CoffeeScript.compile(File.read('lib.coffee'))
   end
   
+  @urls = {}
   @libs.each do |lib, path|
     path = [path] unless path.class == Array
     path = path.map{ |url|
-      url = url.gsub(@config['src'], @config['url'])
       case File.extname(url)
-        when '.css', '.js'
+        when '.css'
+          url = @config['url/stylesheets'] + '/' + File.basename(url)
+        when '.js'
+          url = @config['url/javascripts'] + '/' + File.basename(url)
         else
           url = nil
       end
       url
-    }.compact
+    }.compact.uniq
+    @urls[lib] = path
   end
   
-  libjs << "\n/* libs */\nlib.libs(#{@libs.to_json});"
+  libjs << "\n/* libs */\nlib.libs(#{@urls.to_json});"
   
   if @bundle != nil && @bundle.length > 0
     @bundle.each do |name, libs|
@@ -253,9 +258,9 @@ task :build, :config do |task, args|
       js = ''
       files = []
       libs.each do |lib|
-        source = @libs[lib]
-        source = [source] if source.class != Array
-        source.each do |file|
+        lib = @libs[lib] if @libs.has_key?(lib)
+        lib = [lib] unless lib.class == Array
+        lib.each do |file|
           files.push(file)
           case File.extname(file)
             when '.css'
@@ -271,15 +276,15 @@ task :build, :config do |task, args|
       if css != ''
         file = File.join(@config['src/stylesheets'], name + '.css')
         File.open(file, 'w'){ |f| f.write(css) }
-        path.push(file)
+        path.push(@config['url/stylesheets'] + '/' + File.basename(file))
       end
       
       if js != ''
-        files = files.join("','")
-        js << "\nif(typeof lib === 'function'){lib.loaded('add', '#{files}');}"
+        files_url = files.map{ |f| @config['url/javascripts'] + '/' + File.basename(f) }.join("','")
+        js << "\nif(typeof lib === 'function'){lib.loaded('add', '#{files_url}');}"
         file = File.join(@config['src/javascripts'], name + '.js')
         File.open(file, 'w'){ |f| f.write(js) }
-        path.push(file)
+        path.push(@config['url/javascripts'] + '/' + File.basename(file))
       end
       
       if path.length > 0

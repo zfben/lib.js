@@ -4,6 +4,19 @@ loaded = {}
 # save libs to `libs`
 libs = {}
 
+# array uniq
+uniq = (array)->
+  return array if array.length < 2
+  
+  a = []
+  o = {}
+  for v in array
+    if o[v] isnt 1
+      a.push(v)
+      o[v] = 1
+
+  return a
+
 # lib start here
 lib = ->
   
@@ -30,6 +43,9 @@ lib = ->
     return true
   
   source_types(arguments)
+  
+  css = uniq(css)
+  js = uniq(js)
   
   # progress css
   if css.length > 0
